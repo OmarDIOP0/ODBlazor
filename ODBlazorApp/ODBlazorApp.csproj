@@ -5,5 +5,11 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+	<!-- Dans RecipeManager.csproj -->
+<ItemGroup>
+	<PackageReference Include="Bootstrap" Version="5.3.2" />
+	<PackageReference Include="Bootstrap.Icons" Version="1.11.3" />
+	<PackageReference Include="Blazor.Bootstrap" Version="2.0.0" />
+</ItemGroup>
 
 </Project>
