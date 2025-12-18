@@ -1,0 +1,339 @@
+﻿@page "/recipe/{id:int}"
+@inject Services.IRecipeService RecipeService
+@inject NavigationManager NavigationManager
+@using ODBlazorApp.Models
+
+@if (recipe == null)
+{
+    <div class="container mt-5 text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-3">Chargement de la recette...</p>
+    </div>
+}
+else
+{
+    <div class="container mt-4">
+        <!-- En-tête avec navigation -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Accueil</a></li>
+                    <li class="breadcrumb-item"><a href="/search?category=@recipe.Category">@recipe.Category</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@recipe.Title</li>
+                </ol>
+            </nav>
+            <div>
+                <button class="btn btn-outline-secondary me-2" @onclick="GoBack">
+                    <i class="bi bi-arrow-left me-1"></i>Retour
+                </button>
+                <a href="/edit-recipe/@recipe.Id" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Modifier
+                </a>
+            </div>
+        </div>
+
+        <!-- Image et informations principales -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm overflow-hidden">
+                    <img src="@recipe.ImageUrl"
+                         alt="@recipe.Title"
+                         class="card-img-top"
+                         style="height: 400px; object-fit: cover;"
+                         onerror="this.src='/images/default-recipe.jpg'" />
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h1 class="display-5 fw-bold mb-2">@recipe.Title</h1>
+                                <p class="lead text-muted">@recipe.Description</p>
+                            </div>
+                            <span class="badge @GetDifficultyBadgeClass() fs-6 px-3 py-2">
+                                @recipe.Difficulty
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Informations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="text-center p-3 rounded-3" style="background-color: #e8f4fd;">
+                                    <i class="bi bi-clock-history fs-2 text-primary"></i>
+                                    <div class="mt-2">
+                                        <div class="fw-bold fs-5">@recipe.PreparationTime min</div>
+                                        <small class="text-muted">Préparation</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 rounded-3" style="background-color: #ffeaea;">
+                                    <i class="bi bi-fire fs-2 text-danger"></i>
+                                    <div class="mt-2">
+                                        <div class="fw-bold fs-5">@recipe.CookingTime min</div>
+                                        <small class="text-muted">Cuisson</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 rounded-3" style="background-color: #e8f7ef;">
+                                    <i class="bi bi-people-fill fs-2 text-success"></i>
+                                    <div class="mt-2">
+                                        <div class="fw-bold fs-5">@recipe.Servings</div>
+                                        <small class="text-muted">Personnes</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 rounded-3" style="background-color: #f5f0ff;">
+                                    <i class="bi bi-calendar3 fs-2" style="color: #9c27b0;"></i>
+                                    <div class="mt-2">
+                                        <div class="fw-bold fs-5">@recipe.CreatedDate.ToString("dd/MM/yyyy")</div>
+                                        <small class="text-muted">Ajoutée</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h6 class="fw-bold"><i class="bi bi-tag me-1"></i>Catégorie</h6>
+                            <span class="badge bg-primary fs-6 px-3 py-2">@recipe.Category</span>
+                        </div>
+
+                        <div class="mt-3">
+                            <h6 class="fw-bold"><i class="bi bi-tags me-1"></i>Tags</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var tag in recipe.Tags)
+                                {
+                                    <span class="badge bg-light text-dark border">@tag</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingrédients et étapes -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Ingrédients</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Ingrédient</th>
+                                        <th>Quantité</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ingredient in recipe.Ingredients)
+                                    {
+                                        <tr>
+                                            <td>@ingredient.Name</td>
+                                            <td>
+                                                <span class="badge bg-primary">@ingredient.Quantity @ingredient.Unit</span>
+                                            </td>
+                                            <td class="text-muted small">@ingredient.Notes</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end mt-3">
+                            <button class="btn btn-outline-success btn-sm" @onclick="ToggleShoppingList">
+                                <i class="bi bi-cart-plus me-1"></i>
+                                @(showShoppingList ? "Masquer" : "Ajouter à") la liste de courses
+                            </button>
+                        </div>
+
+                        @if (showShoppingList)
+                        {
+                            <div class="alert alert-info mt-3">
+                                <h6><i class="bi bi-cart-check me-2"></i>Liste de courses générée</h6>
+                                <ul class="mb-0">
+                                    @foreach (var ingredient in recipe.Ingredients)
+                                    {
+                                        <li>@ingredient.Quantity @ingredient.Unit de @ingredient.Name</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Étapes de préparation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="steps-timeline">
+                            @for (int i = 0; i < recipe.Steps.Count; i++)
+                            {
+                                <div class="step-item d-flex mb-4">
+                                    <div class="step-number flex-shrink-0 me-3">
+                                        <span class="badge bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center"
+                                              style="width: 40px; height: 40px; font-size: 1.2rem;">
+                                            @(i + 1)
+                                        </span>
+                                    </div>
+                                    <div class="step-content flex-grow-1">
+                                        <p class="mb-0">@recipe.Steps[i]</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="text-muted small mt-4">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Temps total estimé : <strong>@(recipe.PreparationTime + recipe.CookingTime) minutes</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-3">Actions</h5>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <button class="btn btn-outline-primary" @onclick="PrintRecipe">
+                                <i class="bi bi-printer me-1"></i>Imprimer
+                            </button>
+                            <button class="btn btn-outline-success" @onclick="ShareRecipe">
+                                <i class="bi bi-share me-1"></i>Partager
+                            </button>
+                            <button class="btn btn-outline-info" @onclick="DuplicateRecipe">
+                                <i class="bi bi-copy me-1"></i>Dupliquer
+                            </button>
+                            <button class="btn btn-outline-danger" @onclick="DeleteRecipe">
+                                <i class="bi bi-trash me-1"></i>Supprimer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Recipe? recipe;
+    private bool showShoppingList = false;
+
+    protected override void OnParametersSet()
+    {
+        recipe = RecipeService.GetRecipeById(Id);
+        if (recipe == null)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private string GetDifficultyBadgeClass()
+    {
+        if (recipe == null) return "bg-secondary";
+
+        return recipe.Difficulty switch
+        {
+            DifficultyLevel.Facile => "bg-success",
+            DifficultyLevel.Moyen => "bg-warning",
+            DifficultyLevel.Difficile => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void ToggleShoppingList()
+    {
+        showShoppingList = !showShoppingList;
+    }
+
+    private async Task PrintRecipe()
+    {
+        await JSRuntime.InvokeVoidAsync("window.print");
+    }
+
+    private async Task ShareRecipe()
+    {
+        var shareData = new
+        {
+            title = recipe?.Title,
+            text = recipe?.Description,
+            url = NavigationManager.Uri
+        };
+
+        if (await JSRuntime.InvokeAsync<bool>("navigator.share", shareData))
+        {
+            // Partage réussi
+        }
+        else
+        {
+            // Fallback : copier dans le presse-papier
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", NavigationManager.Uri);
+            // Afficher une notification
+        }
+    }
+
+    private void DuplicateRecipe()
+    {
+        if (recipe != null)
+        {
+            var newRecipe = new Recipe
+            {
+                Title = $"{recipe.Title} (Copie)",
+                Description = recipe.Description,
+                PreparationTime = recipe.PreparationTime,
+                CookingTime = recipe.CookingTime,
+                Difficulty = recipe.Difficulty,
+                Category = recipe.Category,
+                Ingredients = recipe.Ingredients.Select(i => new Ingredient
+                {
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    Unit = i.Unit,
+                    Notes = i.Notes
+                }).ToList(),
+                Steps = recipe.Steps.ToList(),
+                Servings = recipe.Servings,
+                Tags = recipe.Tags.ToList()
+            };
+
+            RecipeService.AddRecipe(newRecipe);
+            NavigationManager.NavigateTo($"/recipe/{newRecipe.Id}");
+        }
+    }
+
+    private void DeleteRecipe()
+    {
+        if (recipe != null)
+        {
+            RecipeService.DeleteRecipe(recipe.Id);
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+}
