@@ -1,7 +1,147 @@
 ﻿@page "/"
+@inject Services.IRecipeService RecipeService
+@using ODBlazorApp.Models
 
-<PageTitle>Home</PageTitle>
+<div class="container mt-4">
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 fw-bold mb-3" style="color: var(--primary-color)">
+                <i class="bi bi-egg-fried me-2"></i>Bienvenue sur RecipeMaster
+            </h1>
+            <p class="lead text-muted">Découvrez, gérez et créez vos recettes préférées</p>
+        </div>
+    </div>
 
-<h1>Hello, world!</h1>
+    <div class="row g-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-search me-2"></i>Rechercher une recette
+                    </h5>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" 
+                               placeholder="Rechercher par nom, ingrédient ou tag..."
+                               @bind="searchQuery" 
+                               @bind:event="oninput" />
+                        <button class="btn btn-primary" @onclick="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    
+                    @if (selectedCategory != null)
+                    {
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="me-2">Filtré par :</span>
+                            <span class="badge bg-primary">
+                                @selectedCategory
+                                <button class="btn-close btn-close-white ms-2" 
+                                        style="font-size: 0.6rem;"
+                                        @onclick="ClearCategory"></button>
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">Statistiques</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="p-3 rounded-3" style="background-color: #e3f2fd;">
+                                <i class="bi bi-journal-bookmark-fill fs-1 text-primary"></i>
+                                <h3 class="mt-2">@RecipeService.GetAllRecipes().Count</h3>
+                                <small>Recettes</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 rounded-3" style="background-color: #f3e5f5;">
+                                <i class="bi bi-tags-fill fs-1" style="color: #9c27b0;"></i>
+                                <h3 class="mt-2">@RecipeService.GetCategories().Count</h3>
+                                <small>Catégories</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-Welcome to your new app.
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="bi bi-stars me-2"></i>Catégories populaires
+            </h3>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach (var category in RecipeService.GetCategories())
+                {
+                    <button class="btn btn-outline-primary rounded-pill" 
+                            @onclick="() => FilterByCategory(category)">
+                        @category
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>
+                    <i class="bi bi-collection me-2"></i>Toutes les recettes
+                </h3>
+                <a href="/add-recipe" class="btn btn-success">
+                    <i class="bi bi-plus-circle me-1"></i>Nouvelle recette
+                </a>
+            </div>
+            
+            @if (filteredRecipes.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    @foreach (var recipe in filteredRecipes)
+                    {
+                        <RecipeCard Recipe="recipe" />
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-emoji-frown fs-1 text-muted"></i>
+                    <p class="mt-3">Aucune recette trouvée</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchQuery = string.Empty;
+    private string? selectedCategory = null;
+    private List<Recipe> filteredRecipes = new();
+
+    protected override void OnInitialized()
+    {
+        filteredRecipes = RecipeService.GetAllRecipes();
+    }
+
+    private void Search()
+    {
+        filteredRecipes = RecipeService.SearchRecipes(searchQuery, selectedCategory);
+    }
+
+    private void FilterByCategory(string category)
+    {
+        selectedCategory = category;
+        Search();
+    }
+
+    private void ClearCategory()
+    {
+        selectedCategory = null;
+        filteredRecipes = RecipeService.SearchRecipes(searchQuery);
+    }
+}

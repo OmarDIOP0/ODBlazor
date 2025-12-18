@@ -1,10 +1,14 @@
 using ODBlazorApp.Components;
+using ODBlazorApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddSingleton<IRecipeService, RecipeService>();
 
 var app = builder.Build();
 

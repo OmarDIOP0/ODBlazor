@@ -26,10 +26,6 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/bmd tech/source/repos/ODBlazorApp/ODBlazorApp/Components/Pages/Counter.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/bmd tech/source/repos/ODBlazorApp/ODBlazorApp/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -38,8 +34,8 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/bmd tech/source/repos/ODBlazorApp/ODBlazorApp/Components/Pages/Weather.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xXZWF0aGVyLnJhem9y
+[C:/Users/bmd tech/source/repos/ODBlazorApp/ODBlazorApp/Components/RecipeCard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSZWNpcGVDYXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/bmd tech/source/repos/ODBlazorApp/ODBlazorApp/Components/Routes.razor]
