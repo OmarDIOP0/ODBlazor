@@ -1,0 +1,243 @@
+﻿@page "/edit-recipe/{id:int}"
+@inject Services.IRecipeService RecipeService
+@using ODBlazorApp.Models
+@inject NavigationManager NavigationManager
+
+@if (recipe == null)
+{
+    <div class="container mt-5 text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+        <p class="mt-3">Chargement de la recette...</p>
+    </div>
+}
+else
+{
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="display-6 fw-bold text-primary">
+                        <i class="bi bi-pencil-square me-2"></i>Modifier la recette
+                    </h1>
+                    <div>
+                        <a href="/recipe/@recipe.Id" class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-eye me-1"></i>Voir
+                        </a>
+                        <button class="btn btn-danger" @onclick="DeleteRecipe">
+                            <i class="bi bi-trash me-1"></i>Supprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <EditForm Model="@recipe" OnValidSubmit="@HandleSubmit">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Le même formulaire que AddRecipe.razor mais pré-rempli -->
+                    <!-- Tu peux copier le formulaire d'AddRecipe et adapter -->
+                    <!-- Pour gagner de la place, je te montre les adaptations nécessaires -->
+                    
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-card-text me-2"></i>Informations principales</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <!-- Copier ici les mêmes champs que AddRecipe mais avec les valeurs existantes -->
+                                <div class="col-md-8">
+                                    <div class="form-floating">
+                                        <InputText id="title" class="form-control" @bind-Value="recipe.Title" />
+                                        <label for="title">Titre de la recette *</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- ... autres champs ... -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ingrédients existants -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Ingrédients</h5>
+                        </div>
+                        <div class="card-body">
+                            @for (int i = 0; i < recipe.Ingredients.Count; i++)
+                            {
+                                var index = i;
+                                <div class="row g-2 mb-3 align-items-center">
+                                    <!-- Même structure que AddRecipe -->
+                                </div>
+                            }
+                            
+                            <button type="button" class="btn btn-outline-success" @onclick="AddIngredient">
+                                <i class="bi bi-plus-circle me-1"></i>Ajouter un ingrédient
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Étapes existantes -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="bi bi-list-ol me-2"></i>Étapes de préparation</h5>
+                        </div>
+                        <div class="card-body">
+                            @for (int i = 0; i < recipe.Steps.Count; i++)
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label">Étape @(i + 1)</label>
+                                    <textarea class="form-control" rows="3" 
+                                              @bind="recipe.Steps[i]"></textarea>
+                                    <div class="mt-2 text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                @onclick="() => RemoveStep(i)">
+                                            <i class="bi bi-trash me-1"></i>Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            
+                            <button type="button" class="btn btn-outline-warning" @onclick="AddStep">
+                                <i class="bi bi-plus-circle me-1"></i>Ajouter une étape
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="d-flex justify-content-between mb-5">
+                        <button type="button" class="btn btn-outline-secondary" @onclick="CancelEdit">
+                            <i class="bi bi-x-circle me-1"></i>Annuler
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>Enregistrer les modifications
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Historique des modifications -->
+                <div class="col-lg-4">
+                    <div class="sticky-top" style="top: 20px;">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-secondary text-white">
+                                <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historique</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="small mb-1">
+                                    <strong>Créée le :</strong>
+                                    @recipe.CreatedDate.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                                <p class="small mb-0">
+                                    <strong>Dernière modification :</strong>
+                                    @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Aperçu rapide -->
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Aperçu rapide</h6>
+                            </div>
+                            <div class="card-body">
+                                <h5>@recipe.Title</h5>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="badge bg-primary">@recipe.Category</span>
+                                    <span class="badge @GetDifficultyBadgeClass()">@recipe.Difficulty</span>
+                                </div>
+                                <div class="small text-muted">
+                                    @recipe.Ingredients.Count ingrédients • @recipe.Steps.Count étapes
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Recipe? recipe;
+    private string originalTags = string.Empty;
+    
+    protected override void OnParametersSet()
+    {
+        recipe = RecipeService.GetRecipeById(Id);
+        if (recipe == null)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            originalTags = string.Join(", ", recipe.Tags);
+        }
+    }
+    
+    private void AddIngredient()
+    {
+        recipe?.Ingredients.Add(new Ingredient());
+    }
+    
+    private void RemoveIngredient(int index)
+    {
+        if (recipe != null && recipe.Ingredients.Count > 1)
+        {
+            recipe.Ingredients.RemoveAt(index);
+        }
+    }
+    
+    private void AddStep()
+    {
+        recipe?.Steps.Add(string.Empty);
+    }
+    
+    private void RemoveStep(int index)
+    {
+        if (recipe != null && recipe.Steps.Count > 1)
+        {
+            recipe.Steps.RemoveAt(index);
+        }
+    }
+    
+    private void HandleSubmit()
+    {
+        if (recipe != null)
+        {
+            RecipeService.UpdateRecipe(recipe);
+            NavigationManager.NavigateTo($"/recipe/{recipe.Id}");
+        }
+    }
+    
+    private void CancelEdit()
+    {
+        NavigationManager.NavigateTo($"/recipe/{Id}");
+    }
+    
+    private void DeleteRecipe()
+    {
+        if (recipe != null)
+        {
+            RecipeService.DeleteRecipe(recipe.Id);
+            NavigationManager.NavigateTo("/");
+        }
+    }
+    
+    private string GetDifficultyBadgeClass()
+    {
+        if (recipe == null) return "bg-secondary";
+        
+        return recipe.Difficulty switch
+        {
+            DifficultyLevel.Facile => "bg-success",
+            DifficultyLevel.Moyen => "bg-warning",
+            DifficultyLevel.Difficile => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}
