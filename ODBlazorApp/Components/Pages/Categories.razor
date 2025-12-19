@@ -1,0 +1,481 @@
+﻿@page "/categories"
+@inject Services.IRecipeService RecipeService
+@using ODBlazorApp.Models
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="display-6 fw-bold text-primary">
+                    <i class="bi bi-tags me-2"></i>Gestion des catégories
+                </h1>
+                <button class="btn btn-success" @onclick="ShowAddCategoryModal">
+                    <i class="bi bi-plus-circle me-1"></i>Nouvelle catégorie
+                </button>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Les catégories vous permettent d'organiser vos recettes pour les retrouver facilement.
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-tag fs-1 text-primary"></i>
+                    <h3 class="mt-2">@categories.Count</h3>
+                    <p class="text-muted mb-0">Catégories</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-journal-bookmark fs-1 text-success"></i>
+                    <h3 class="mt-2">@totalRecipes</h3>
+                    <p class="text-muted mb-0">Recettes totales</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-star fs-1 text-warning"></i>
+                    <h3 class="mt-2">@mostUsedCategory</h3>
+                    <p class="text-muted mb-0">Catégorie la plus utilisée</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="bi bi-pie-chart fs-1 text-info"></i>
+                    <h3 class="mt-2">@(categories.Count > 0 ? averageRecipesPerCategory.ToString("0.0") : "0")</h3>
+                    <p class="text-muted mb-0">Moyenne par catégorie</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des catégories -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-list-columns me-2"></i>Liste des catégories</h5>
+                </div>
+                <div class="card-body">
+                    @if (categories.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Nombre de recettes</th>
+                                        <th>Dernière recette</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var category in categories)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary fs-6 px-3 py-2">@category.Name</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@category.RecipeCount recettes</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">@category.LastRecipeDate</small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="/search?category=@category.Name" 
+                                                       class="btn btn-outline-primary">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <button class="btn btn-outline-warning" 
+                                                            @onclick="() => ShowEditCategoryModal(category)">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger" 
+                                                            @onclick="() => ShowDeleteConfirmModal(category)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-tag fs-1 text-muted"></i>
+                            <p class="mt-3">Aucune catégorie créée</p>
+                            <button class="btn btn-primary" @onclick="ShowAddCategoryModal">
+                                <i class="bi bi-plus-circle me-1"></i>Créer votre première catégorie
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Distribution des recettes -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Distribution des recettes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        @foreach (var category in categories.OrderByDescending(c => c.RecipeCount))
+                        {
+                            var percentage = totalRecipes > 0 ? (category.RecipeCount * 100 / totalRecipes) : 0;
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>@category.Name</span>
+                                    <span>@category.RecipeCount (@percentage%)</span>
+                                </div>
+                                <div class="progress mb-3" style="height: 10px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: @percentage%; background-color: @GetCategoryColor(category);">
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Suggestions et actions -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 20px;">
+                <!-- Actions rapides -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="bi bi-lightning-charge me-2"></i>Actions rapides</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" @onclick="ShowAddCategoryModal">
+                                <i class="bi bi-plus-circle me-1"></i>Ajouter une catégorie
+                            </button>
+                            <button class="btn btn-outline-secondary" @onclick="GenerateDefaultCategories">
+                                <i class="bi bi-magic me-1"></i>Générer des catégories par défaut
+                            </button>
+                            <button class="btn btn-outline-warning" @onclick="ExportCategories">
+                                <i class="bi bi-download me-1"></i>Exporter la liste
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Catégories populaires -->
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0"><i class="bi bi-star me-2"></i>Catégories populaires</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (categories.Any())
+                        {
+                            <div class="list-group list-group-flush">
+                                @foreach (var category in categories.OrderByDescending(c => c.RecipeCount).Take(5))
+                                {
+                                    <a href="/search?category=@category.Name" 
+                                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                        <span>@category.Name</span>
+                                        <span class="badge bg-primary rounded-pill">@category.RecipeCount</span>
+                                    </a>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted small mb-0">Aucune donnée disponible</p>
+                        }
+                    </div>
+                </div>
+                
+                <!-- Statistiques avancées -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0"><i class="bi bi-graph-up me-2"></i>Statistiques</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled small mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                <strong>@categoriesWithRecipes</strong> catégories avec recettes
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-clock text-warning me-2"></i>
+                                <strong>@emptyCategories</strong> catégories vides
+                            </li>
+                            <li>
+                                <i class="bi bi-trend-up text-info me-2"></i>
+                                <strong>@totalRecipes</strong> recettes au total
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'ajout/édition -->
+@if (showCategoryModal)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header @(isEditing ? "bg-warning" : "bg-success") text-white">
+                    <h5 class="modal-title">
+                        <i class="bi @(isEditing ? "bi-pencil" : "bi-plus-circle") me-2"></i>
+                        @(isEditing ? "Modifier la catégorie" : "Nouvelle catégorie")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseCategoryModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="categoryName" 
+                               @bind="newCategoryName" placeholder="Nom de la catégorie" />
+                        <label for="categoryName">Nom de la catégorie *</label>
+                    </div>
+                    @if (isEditing && !string.IsNullOrEmpty(selectedCategory?.Name))
+                    {
+                        <div class="alert alert-info small">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Attention : La modification du nom affectera toutes les recettes de cette catégorie.
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseCategoryModal">
+                        <i class="bi bi-x-circle me-1"></i>Annuler
+                    </button>
+                    <button type="button" class="btn @(isEditing ? "btn-warning" : "btn-success")" 
+                            @onclick="SaveCategory" disabled="@(string.IsNullOrWhiteSpace(newCategoryName))">
+                        <i class="bi @(isEditing ? "bi-check-circle" : "bi-save") me-1"></i>
+                        @(isEditing ? "Modifier" : "Créer")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de confirmation de suppression -->
+@if (showDeleteModal && selectedCategory != null)
+{
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Confirmer la suppression
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-octagon me-2"></i>
+                        <strong>Attention !</strong> Vous êtes sur le point de supprimer la catégorie 
+                        "<strong>@selectedCategory.Name</strong>".
+                    </div>
+                    <p class="mb-0">
+                        Cette action affectera <strong>@selectedCategory.RecipeCount recette(s)</strong>.
+                        Les recettes seront déplacées vers la catégorie "Autre".
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDeleteModal">
+                        <i class="bi bi-x-circle me-1"></i>Annuler
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="DeleteCategory">
+                        <i class="bi bi-trash me-1"></i>Supprimer définitivement
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CategoryInfo> categories = new();
+    private CategoryInfo? selectedCategory = null;
+    private bool showCategoryModal = false;
+    private bool showDeleteModal = false;
+    private bool isEditing = false;
+    private string newCategoryName = string.Empty;
+    
+    private int totalRecipes = 0;
+    private string mostUsedCategory = "Aucune";
+    private double averageRecipesPerCategory = 0;
+    private int categoriesWithRecipes = 0;
+    private int emptyCategories = 0;
+    
+    protected override void OnInitialized()
+    {
+        LoadCategories();
+        CalculateStatistics();
+    }
+    
+    private void LoadCategories()
+    {
+        var allRecipes = RecipeService.GetAllRecipes();
+        categories = allRecipes
+            .GroupBy(r => r.Category)
+            .Select(g => new CategoryInfo
+            {
+                Name = g.Key,
+                RecipeCount = g.Count(),
+                LastRecipeDate = g.Max(r => r.CreatedDate).ToString("dd/MM/yyyy")
+            })
+            .OrderByDescending(c => c.RecipeCount)
+            .ThenBy(c => c.Name)
+            .ToList();
+    }
+    
+    private void CalculateStatistics()
+    {
+        totalRecipes = RecipeService.GetAllRecipes().Count;
+        
+        if (categories.Any())
+        {
+            mostUsedCategory = categories.OrderByDescending(c => c.RecipeCount).First().Name;
+            averageRecipesPerCategory = categories.Average(c => c.RecipeCount);
+            categoriesWithRecipes = categories.Count(c => c.RecipeCount > 0);
+            emptyCategories = RecipeService.GetCategories().Count() - categoriesWithRecipes;
+        }
+    }
+    
+    private void ShowAddCategoryModal()
+    {
+        isEditing = false;
+        newCategoryName = string.Empty;
+        showCategoryModal = true;
+    }
+    
+    private void ShowEditCategoryModal(CategoryInfo category)
+    {
+        isEditing = true;
+        selectedCategory = category;
+        newCategoryName = category.Name;
+        showCategoryModal = true;
+    }
+    
+    private void CloseCategoryModal()
+    {
+        showCategoryModal = false;
+        selectedCategory = null;
+        newCategoryName = string.Empty;
+    }
+    
+    private void SaveCategory()
+    {
+        if (string.IsNullOrWhiteSpace(newCategoryName))
+            return;
+        
+        if (isEditing && selectedCategory != null)
+        {
+            // Mettre à jour les recettes de cette catégorie
+            var recipesToUpdate = RecipeService.GetAllRecipes()
+                .Where(r => r.Category == selectedCategory.Name);
+            
+            foreach (var recipe in recipesToUpdate)
+            {
+                recipe.Category = newCategoryName;
+                RecipeService.UpdateRecipe(recipe);
+            }
+        }
+        // Note : Pour une nouvelle catégorie, elle sera automatiquement créée
+        // quand une recette l'utilisera
+        
+        LoadCategories();
+        CalculateStatistics();
+        CloseCategoryModal();
+    }
+    
+    private void ShowDeleteConfirmModal(CategoryInfo category)
+    {
+        selectedCategory = category;
+        showDeleteModal = true;
+    }
+    
+    private void CloseDeleteModal()
+    {
+        showDeleteModal = false;
+        selectedCategory = null;
+    }
+    
+    private void DeleteCategory()
+    {
+        if (selectedCategory != null)
+        {
+            // Déplacer les recettes vers "Autre"
+            var recipesToUpdate = RecipeService.GetAllRecipes()
+                .Where(r => r.Category == selectedCategory.Name);
+            
+            foreach (var recipe in recipesToUpdate)
+            {
+                recipe.Category = "Autre";
+                RecipeService.UpdateRecipe(recipe);
+            }
+            
+            LoadCategories();
+            CalculateStatistics();
+            CloseDeleteModal();
+        }
+    }
+    
+    private void GenerateDefaultCategories()
+    {
+        var defaultCategories = new List<string>
+        {
+            "Entrées", "Plats principaux", "Desserts", "Apéritifs", 
+            "Boissons", "Végétarien", "Rapide", "Healthy"
+        };
+        
+        // Ces catégories seront disponibles dans les sélecteurs
+        // Elles seront réellement créées quand utilisées
+        LoadCategories();
+        CalculateStatistics();
+    }
+    
+    private async Task ExportCategories()
+    {
+        var csvContent = "Catégorie,Nombre de recettes,Dernière recette\n";
+        csvContent += string.Join("\n", categories.Select(c => 
+            $"{c.Name},{c.RecipeCount},{c.LastRecipeDate}"));
+        
+        await JSRuntime.InvokeVoidAsync("downloadCsv", csvContent, "categories.csv");
+    }
+    
+    private string GetCategoryColor(CategoryInfo category)
+    {
+        // Générer une couleur basée sur le nom de la catégorie
+        var hash = category.Name.GetHashCode();
+        var colors = new[] { "#ff6b6b", "#4ecdc4", "#ffd166", "#06d6a0", "#118ab2", "#ef476f", "#073b4c" };
+        return colors[Math.Abs(hash) % colors.Length];
+    }
+    
+    private class CategoryInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public int RecipeCount { get; set; }
+        public string LastRecipeDate { get; set; } = string.Empty;
+    }
+    
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+}
