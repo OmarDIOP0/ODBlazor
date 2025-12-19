@@ -1,3 +1,4 @@
+wwwroot\app.css
 wwwroot\app.js
 wwwroot\bootstrap-icons\bootstrap-icons.svg
 wwwroot\bootstrap-icons\font\bootstrap-icons.css
@@ -2222,4 +2223,3 @@ wwwroot\lib\scss\_type.scss
 wwwroot\lib\scss\_utilities.scss
 wwwroot\lib\scss\_variables-dark.scss
 wwwroot\lib\scss\_variables.scss
-wwwroot\app.css
