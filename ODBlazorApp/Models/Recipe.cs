@@ -7,34 +7,31 @@ namespace ODBlazorApp.Models
     {
         [Key]
         public int Id { get; set; }
-
-        [Required(ErrorMessage = "Le titre est requis")]
         [MaxLength(100)]
-        public string Title { get; set; } = string.Empty;
+        public string Title { get; set; } = "Recipe";
 
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;
 
         public string ImageUrl { get; set; } = "/images/default-recipe.jpg";
 
-        [Required(ErrorMessage = "Le temps de préparation est requis")]
-        [Range(1, 600, ErrorMessage = "Le temps doit être entre 1 et 600 minutes")]
-        public int PreparationTime { get; set; }
+        [Range(0, 600, ErrorMessage = "Le temps doit être entre 0 et 600 minutes")]
+        public int PreparationTime { get; set; } = 0;
 
         [Range(0, 600, ErrorMessage = "Le temps doit être entre 0 et 600 minutes")]
-        public int CookingTime { get; set; }
+        public int CookingTime { get; set; } = 0;
 
-        public DifficultyLevel Difficulty { get; set; }
+        public DifficultyLevel Difficulty { get; set; } = DifficultyLevel.Facile;
 
-        [Required(ErrorMessage = "La catégorie est requise")]
         [MaxLength(50)]
         public string Category { get; set; } = "Autre";
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
+        [Range(1, 100, ErrorMessage = "Le nombre de personnes doit être entre 1 et 100")]
         public int Servings { get; set; } = 4;
 
-        // Navigation properties
+        // Navigation properties - RETIRÉ [Required] des collections
         public List<Ingredient> Ingredients { get; set; } = new();
         public List<RecipeStep> Steps { get; set; } = new();
         public List<Tag> Tags { get; set; } = new();
@@ -45,7 +42,7 @@ namespace ODBlazorApp.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
+        // RETIRÉ [Required] pour permettre des ingrédients vides
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
@@ -67,10 +64,10 @@ namespace ODBlazorApp.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
+        // RETIRÉ [Required] de StepNumber
         public int StepNumber { get; set; }
 
-        [Required]
+        // RETIRÉ [Required] pour permettre des étapes vides
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;
 
@@ -83,7 +80,7 @@ namespace ODBlazorApp.Models
         [Key]
         public int Id { get; set; }
 
-        [Required]
+        // RETIRÉ [Required] pour permettre des tags vides
         [MaxLength(50)]
         public string Name { get; set; } = string.Empty;
 

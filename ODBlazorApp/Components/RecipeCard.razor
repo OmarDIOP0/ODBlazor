@@ -5,7 +5,8 @@
         <div class="card-img-top position-relative" style="height: 200px; overflow: hidden;">
             <img src="@Recipe.ImageUrl"
                  alt="@Recipe.Title"
-                 class="w-100 h-100 object-fit-cover" />
+                 class="w-100 h-100 object-fit-cover"
+                 onerror="this.src='/images/default-recipe.jpg'" />
             <span class="position-absolute top-0 end-0 m-2 badge @GetDifficultyBadgeClass()">
                 @Recipe.Difficulty
             </span>
@@ -37,7 +38,11 @@
                 <span class="badge category-badge">@Recipe.Category</span>
                 @foreach (var tag in Recipe.Tags.Take(2))
                 {
-                    <span class="badge bg-light text-dark border">@tag</span>
+                    <span class="badge bg-light text-dark border">@tag.Name</span>
+                }
+                @if (Recipe.Tags.Count > 2)
+                {
+                    <span class="badge bg-light text-dark border">+@(Recipe.Tags.Count - 2)</span>
                 }
             </div>
 

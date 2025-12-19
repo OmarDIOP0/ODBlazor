@@ -1,67 +1,56 @@
 ﻿@page "/"
 @inject Services.IRecipeService RecipeService
+@inject NavigationManager NavigationManager
 @using ODBlazorApp.Models
 
-<div class="container mt-4">
-    <div class="row mb-5">
-        <div class="col-12 text-center">
-            <h1 class="display-4 fw-bold mb-3" style="color: var(--primary-color)">
-                <i class="bi bi-egg-fried me-2"></i>Bienvenue sur RecipeMaster
-            </h1>
-            <p class="lead text-muted">Découvrez, gérez et créez vos recettes préférées</p>
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="jumbotron p-5 rounded" style="background: linear-gradient(135deg, #ff6b6b, #4ecdc4);">
+                <h1 class="display-4 text-white fw-bold">
+                    <i class="bi bi-egg-fried me-2"></i>RecipeMaster
+                </h1>
+                <p class="lead text-white">Découvrez, gérez et créez vos recettes préférées</p>
+                <a href="/add-recipe" class="btn btn-light btn-lg mt-3">
+                    <i class="bi bi-plus-circle me-1"></i>Créer une recette
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row mb-4">
         <div class="col-md-8">
-            <div class="card shadow-sm border-0">
+            <div class="card shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title">
-                        <i class="bi bi-search me-2"></i>Rechercher une recette
-                    </h5>
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control" 
-                               placeholder="Rechercher par nom, ingrédient ou tag..."
-                               @bind="searchQuery" 
+                    <div class="input-group">
+                        <input type="text" class="form-control form-control-lg"
+                               placeholder="Rechercher une recette..."
+                               @bind="searchQuery"
                                @bind:event="oninput" />
-                        <button class="btn btn-primary" @onclick="Search">
+                        <button class="btn btn-primary btn-lg" @onclick="Search">
                             <i class="bi bi-search"></i>
                         </button>
                     </div>
-                    
-                    @if (selectedCategory != null)
-                    {
-                        <div class="d-flex align-items-center mb-3">
-                            <span class="me-2">Filtré par :</span>
-                            <span class="badge bg-primary">
-                                @selectedCategory
-                                <button class="btn-close btn-close-white ms-2" 
-                                        style="font-size: 0.6rem;"
-                                        @onclick="ClearCategory"></button>
-                            </span>
-                        </div>
-                    }
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-4">
-            <div class="card shadow-sm border-0">
+            <div class="card shadow-sm">
                 <div class="card-body text-center">
-                    <h5 class="card-title mb-3">Statistiques</h5>
                     <div class="row">
                         <div class="col-6">
-                            <div class="p-3 rounded-3" style="background-color: #e3f2fd;">
+                            <div class="p-3">
                                 <i class="bi bi-journal-bookmark-fill fs-1 text-primary"></i>
-                                <h3 class="mt-2">@RecipeService.GetAllRecipes().Count</h3>
-                                <small>Recettes</small>
+                                <h3 class="mt-2">@recipeCount</h3>
+                                <small class="text-muted">Recettes</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="p-3 rounded-3" style="background-color: #f3e5f5;">
+                            <div class="p-3">
                                 <i class="bi bi-tags-fill fs-1" style="color: #9c27b0;"></i>
-                                <h3 class="mt-2">@RecipeService.GetCategories().Count</h3>
-                                <small>Catégories</small>
+                                <h3 class="mt-2">@categoriesCount</h3>
+                                <small class="text-muted">Catégories</small>
                             </div>
                         </div>
                     </div>
@@ -70,15 +59,19 @@
         </div>
     </div>
 
-    <div class="row mt-5">
+    <div class="row mb-4">
         <div class="col-12">
-            <h3 class="mb-4">
-                <i class="bi bi-stars me-2"></i>Catégories populaires
+            <h3 class="mb-3">
+                <i class="bi bi-filter me-2"></i>Filtrer par catégorie
             </h3>
             <div class="d-flex flex-wrap gap-2">
-                @foreach (var category in RecipeService.GetCategories())
+                <button class="btn @(selectedCategory == null ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => FilterByCategory(null)">
+                    Toutes
+                </button>
+                @foreach (var category in categories)
                 {
-                    <button class="btn btn-outline-primary rounded-pill" 
+                    <button class="btn @(selectedCategory == category ? "btn-primary" : "btn-outline-primary")"
                             @onclick="() => FilterByCategory(category)">
                         @category
                     </button>
@@ -87,21 +80,22 @@
         </div>
     </div>
 
-    <div class="row mt-5">
+    <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3>
-                    <i class="bi bi-collection me-2"></i>Toutes les recettes
+                    <i class="bi bi-collection me-2"></i>
+                    @(selectedCategory == null ? "Toutes les recettes" : $"Recettes - {selectedCategory}")
                 </h3>
                 <a href="/add-recipe" class="btn btn-success">
                     <i class="bi bi-plus-circle me-1"></i>Nouvelle recette
                 </a>
             </div>
-            
-            @if (filteredRecipes.Any())
+
+            @if (recipes.Any())
             {
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    @foreach (var recipe in filteredRecipes)
+                    @foreach (var recipe in recipes)
                     {
                         <RecipeCard Recipe="recipe" />
                     }
@@ -111,7 +105,11 @@
             {
                 <div class="text-center py-5">
                     <i class="bi bi-emoji-frown fs-1 text-muted"></i>
-                    <p class="mt-3">Aucune recette trouvée</p>
+                    <h4 class="mt-3">Aucune recette trouvée</h4>
+                    <p class="text-muted">Essayez de modifier vos critères de recherche ou créez une nouvelle recette.</p>
+                    <a href="/add-recipe" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Créer une recette
+                    </a>
                 </div>
             }
         </div>
@@ -119,29 +117,34 @@
 </div>
 
 @code {
+    private List<Recipe> recipes = new();
+    private List<string> categories = new();
     private string searchQuery = string.Empty;
     private string? selectedCategory = null;
-    private List<Recipe> filteredRecipes = new();
+    private int recipeCount = 0;
+    private int categoriesCount = 0;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        filteredRecipes = RecipeService.GetAllRecipes();
+        await LoadData();
     }
 
-    private void Search()
+    private async Task LoadData()
     {
-        filteredRecipes = RecipeService.SearchRecipes(searchQuery, selectedCategory);
+        recipes = await RecipeService.SearchRecipesAsync(searchQuery, selectedCategory);
+        categories = await RecipeService.GetCategoriesAsync();
+        recipeCount = recipes.Count;
+        categoriesCount = categories.Count;
     }
 
-    private void FilterByCategory(string category)
+    private async Task Search()
+    {
+        await LoadData();
+    }
+
+    private async Task FilterByCategory(string? category)
     {
         selectedCategory = category;
-        Search();
-    }
-
-    private void ClearCategory()
-    {
-        selectedCategory = null;
-        filteredRecipes = RecipeService.SearchRecipes(searchQuery);
+        await LoadData();
     }
 }

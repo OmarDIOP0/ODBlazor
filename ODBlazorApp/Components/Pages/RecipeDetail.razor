@@ -1,6 +1,7 @@
 ﻿@page "/recipe/{id:int}"
 @inject Services.IRecipeService RecipeService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 @using ODBlazorApp.Models
 
 @if (recipe == null)
@@ -20,7 +21,7 @@ else
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="/">Accueil</a></li>
-                    <li class="breadcrumb-item"><a href="/search?category=@recipe.Category">@recipe.Category</a></li>
+                    <li class="breadcrumb-item"><a href="/?category=@recipe.Category">@recipe.Category</a></li>
                     <li class="breadcrumb-item active" aria-current="page">@recipe.Title</li>
                 </ol>
             </nav>
@@ -112,7 +113,7 @@ else
                             <div class="d-flex flex-wrap gap-2">
                                 @foreach (var tag in recipe.Tags)
                                 {
-                                    <span class="badge bg-light text-dark border">@tag</span>
+                                    <span class="badge bg-light text-dark border">@tag.Name</span>
                                 }
                             </div>
                         </div>
@@ -182,17 +183,17 @@ else
                     </div>
                     <div class="card-body">
                         <div class="steps-timeline">
-                            @for (int i = 0; i < recipe.Steps.Count; i++)
+                            @foreach (var step in recipe.Steps.OrderBy(s => s.StepNumber))
                             {
                                 <div class="step-item d-flex mb-4">
                                     <div class="step-number flex-shrink-0 me-3">
                                         <span class="badge bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center"
                                               style="width: 40px; height: 40px; font-size: 1.2rem;">
-                                            @(i + 1)
+                                            @step.StepNumber
                                         </span>
                                     </div>
                                     <div class="step-content flex-grow-1">
-                                        <p class="mb-0">@recipe.Steps[i]</p>
+                                        <p class="mb-0">@step.Description</p>
                                     </div>
                                 </div>
                             }
@@ -239,9 +240,9 @@ else
     private Recipe? recipe;
     private bool showShoppingList = false;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        recipe = RecipeService.GetRecipeById(Id);
+        recipe = await RecipeService.GetRecipeByIdAsync(Id);
         if (recipe == null)
         {
             NavigationManager.NavigateTo("/");
@@ -278,26 +279,28 @@ else
 
     private async Task ShareRecipe()
     {
-        var shareData = new
+        if (recipe != null)
         {
-            title = recipe?.Title,
-            text = recipe?.Description,
-            url = NavigationManager.Uri
-        };
+            var shareData = new
+            {
+                title = recipe.Title,
+                text = recipe.Description,
+                url = NavigationManager.Uri
+            };
 
-        if (await JSRuntime.InvokeAsync<bool>("navigator.share", shareData))
-        {
-            // Partage réussi
-        }
-        else
-        {
-            // Fallback : copier dans le presse-papier
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", NavigationManager.Uri);
-            // Afficher une notification
+            if (await JSRuntime.InvokeAsync<bool>("shareRecipe", shareData.title, shareData.text, shareData.url))
+            {
+                // Partage réussi
+            }
+            else
+            {
+                // Fallback : copier dans le presse-papier
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", NavigationManager.Uri);
+            }
         }
     }
 
-    private void DuplicateRecipe()
+    private async Task DuplicateRecipe()
     {
         if (recipe != null)
         {
@@ -309,31 +312,34 @@ else
                 CookingTime = recipe.CookingTime,
                 Difficulty = recipe.Difficulty,
                 Category = recipe.Category,
-                Ingredients = recipe.Ingredients.Select(i => new Ingredient
-                {
-                    Name = i.Name,
-                    Quantity = i.Quantity,
-                    Unit = i.Unit,
-                    Notes = i.Notes
-                }).ToList(),
-                Steps = recipe.Steps.ToList(),
                 Servings = recipe.Servings,
-                Tags = recipe.Tags.ToList()
+                ImageUrl = recipe.ImageUrl,
+                Ingredients = recipe.Ingredients.Select(i => new Ingredient 
+                { 
+                    Name = i.Name, 
+                    Quantity = i.Quantity, 
+                    Unit = i.Unit, 
+                    Notes = i.Notes 
+                }).ToList(),
+                Steps = recipe.Steps.Select(s => new RecipeStep
+                {
+                    StepNumber = s.StepNumber,
+                    Description = s.Description
+                }).ToList(),
+                Tags = recipe.Tags.Select(t => new Tag { Name = t.Name }).ToList()
             };
 
-            RecipeService.AddRecipe(newRecipe);
+            await RecipeService.AddRecipeAsync(newRecipe);
             NavigationManager.NavigateTo($"/recipe/{newRecipe.Id}");
         }
     }
 
-    private void DeleteRecipe()
+    private async Task DeleteRecipe()
     {
         if (recipe != null)
         {
-            RecipeService.DeleteRecipe(recipe.Id);
+            await RecipeService.DeleteRecipeAsync(recipe.Id);
             NavigationManager.NavigateTo("/");
         }
     }
-
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 }

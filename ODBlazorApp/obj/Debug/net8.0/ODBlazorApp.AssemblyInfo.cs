@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ODBlazorApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c422ce5baf7a2f8a5c7a867a1adb515253e04b93")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+50ddbc9ebd6d55903a8456adb307c15c2ff88ce9")]
 [assembly: System.Reflection.AssemblyProductAttribute("ODBlazorApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ODBlazorApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

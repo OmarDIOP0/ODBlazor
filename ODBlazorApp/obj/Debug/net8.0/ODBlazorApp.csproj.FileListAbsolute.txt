@@ -115,7 +115,6 @@ C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\rjimswa.
 C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
 C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\scopedcss\Components\Layout\MainLayout.razor.rz.scp.css
-C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\scopedcss\Components\Layout\NavMenu.razor.rz.scp.css
 C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\scopedcss\bundle\ODBlazorApp.styles.css
 C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\scopedcss\projectbundle\ODBlazorApp.bundle.scp.css
 C:\Users\bmd tech\source\repos\ODBlazorApp\ODBlazorApp\obj\Debug\net8.0\staticwebassets.build.json

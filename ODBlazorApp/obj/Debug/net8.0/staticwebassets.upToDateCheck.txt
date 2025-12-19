@@ -2087,6 +2087,7 @@ wwwroot\bootstrap-icons\icons\zoom-out.svg
 wwwroot\bootstrap\bootstrap.min.css
 wwwroot\bootstrap\bootstrap.min.css.map
 wwwroot\favicon.png
+wwwroot\images\default-recipe.jpg
 wwwroot\lib\css\bootstrap-grid.css
 wwwroot\lib\css\bootstrap-grid.css.map
 wwwroot\lib\css\bootstrap-grid.min.css
