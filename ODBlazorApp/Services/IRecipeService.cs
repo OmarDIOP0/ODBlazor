@@ -1,100 +1,148 @@
-﻿using ODBlazorApp.Models;
-using System.Collections.Concurrent;
+﻿using Microsoft.EntityFrameworkCore;
+using ODBlazorApp.Data;
+using ODBlazorApp.Models;
 
 namespace ODBlazorApp.Services
 {
     public interface IRecipeService
     {
-        List<Recipe> GetAllRecipes();
-        Recipe? GetRecipeById(int id);
-        void AddRecipe(Recipe recipe);
-        void UpdateRecipe(Recipe recipe);
-        void DeleteRecipe(int id);
-        List<string> GetCategories();
-        List<Recipe> SearchRecipes(string query, string? category = null);
+        Task<List<Recipe>> GetAllRecipesAsync();
+        Task<Recipe?> GetRecipeByIdAsync(int id);
+        Task AddRecipeAsync(Recipe recipe);
+        Task UpdateRecipeAsync(Recipe recipe);
+        Task DeleteRecipeAsync(int id);
+        Task<List<string>> GetCategoriesAsync();
+        Task<List<Recipe>> SearchRecipesAsync(string? query = null, string? category = null, DifficultyLevel? difficulty = null);
     }
+
     public class RecipeService : IRecipeService
     {
-        private readonly ConcurrentDictionary<int, Recipe> _recipes = new();
-        private int _nextId = 1;
+        private readonly ApplicationDbContext _context;
 
-        public RecipeService()
+        public RecipeService(ApplicationDbContext context)
         {
-            // Données d'exemple
-            InitializeSampleData();
+            _context = context;
         }
 
-        private void InitializeSampleData()
+        public async Task<List<Recipe>> GetAllRecipesAsync()
         {
-            var sampleRecipe = new Recipe
-            {
-                Id = _nextId++,
-                Title = "Pâtes Carbonara",
-                Description = "Une recette classique italienne",
-                PreparationTime = 15,
-                CookingTime = 10,
-                Difficulty = DifficultyLevel.Facile,
-                Category = "Italien",
-                Servings = 4,
-                Ingredients = new List<Ingredient>
-            {
-                new() { Name = "Spaghetti", Quantity = 400, Unit = "g" },
-                new() { Name = "Lardons", Quantity = 200, Unit = "g" },
-                new() { Name = "Œufs", Quantity = 4, Unit = "unités" },
-                new() { Name = "Parmesan", Quantity = 100, Unit = "g" }
-            },
-                Steps = new List<string>
-            {
-                "Faire cuire les pâtes al dente",
-                "Faire revenir les lardons",
-                "Battre les œufs avec le parmesan",
-                "Mélanger le tout hors du feu"
-            },
-                Tags = new List<string> { "rapide", "italien", "dîner" }
-            };
-
-            _recipes[sampleRecipe.Id] = sampleRecipe;
+            return await _context.Recipes
+                .Include(r => r.Ingredients)
+                .Include(r => r.Steps)
+                .Include(r => r.Tags)
+                .OrderBy(r => r.Title)
+                .ToListAsync();
         }
 
-        public List<Recipe> GetAllRecipes() => _recipes.Values.OrderBy(r => r.Title).ToList();
-
-        public Recipe? GetRecipeById(int id) => _recipes.GetValueOrDefault(id);
-
-        public void AddRecipe(Recipe recipe)
+        public async Task<Recipe?> GetRecipeByIdAsync(int id)
         {
-            recipe.Id = _nextId++;
+            return await _context.Recipes
+                .Include(r => r.Ingredients)
+                .Include(r => r.Steps)
+                .Include(r => r.Tags)
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+        public async Task AddRecipeAsync(Recipe recipe)
+        {
             recipe.CreatedDate = DateTime.Now;
-            _recipes[recipe.Id] = recipe;
+
+            // Réorganiser les étapes
+            for (int i = 0; i < recipe.Steps.Count; i++)
+            {
+                recipe.Steps[i].StepNumber = i + 1;
+            }
+
+            await _context.Recipes.AddAsync(recipe);
+            await _context.SaveChangesAsync();
         }
 
-        public void UpdateRecipe(Recipe recipe)
+        public async Task UpdateRecipeAsync(Recipe recipe)
         {
-            if (_recipes.ContainsKey(recipe.Id))
-                _recipes[recipe.Id] = recipe;
+            // Supprimer les anciennes données liées
+            var existingRecipe = await _context.Recipes
+                .Include(r => r.Ingredients)
+                .Include(r => r.Steps)
+                .Include(r => r.Tags)
+                .FirstOrDefaultAsync(r => r.Id == recipe.Id);
+
+            if (existingRecipe != null)
+            {
+                // Mettre à jour les propriétés
+                _context.Entry(existingRecipe).CurrentValues.SetValues(recipe);
+
+                // Mettre à jour les ingrédients
+                existingRecipe.Ingredients.Clear();
+                foreach (var ingredient in recipe.Ingredients)
+                {
+                    existingRecipe.Ingredients.Add(ingredient);
+                }
+
+                // Mettre à jour les étapes
+                existingRecipe.Steps.Clear();
+                for (int i = 0; i < recipe.Steps.Count; i++)
+                {
+                    recipe.Steps[i].StepNumber = i + 1;
+                    existingRecipe.Steps.Add(recipe.Steps[i]);
+                }
+
+                // Mettre à jour les tags
+                existingRecipe.Tags.Clear();
+                foreach (var tag in recipe.Tags)
+                {
+                    existingRecipe.Tags.Add(tag);
+                }
+
+                await _context.SaveChangesAsync();
+            }
         }
 
-        public void DeleteRecipe(int id) => _recipes.TryRemove(id, out _);
-
-        public List<string> GetCategories() =>
-            _recipes.Values.Select(r => r.Category).Distinct().OrderBy(c => c).ToList();
-
-        public List<Recipe> SearchRecipes(string query, string? category = null)
+        public async Task DeleteRecipeAsync(int id)
         {
-            var results = _recipes.Values.AsQueryable();
+            var recipe = await _context.Recipes.FindAsync(id);
+            if (recipe != null)
+            {
+                _context.Recipes.Remove(recipe);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<List<string>> GetCategoriesAsync()
+        {
+            return await _context.Recipes
+                .Select(r => r.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+        }
+
+        public async Task<List<Recipe>> SearchRecipesAsync(string? query = null, string? category = null, DifficultyLevel? difficulty = null)
+        {
+            var recipes = _context.Recipes
+                .Include(r => r.Ingredients)
+                .Include(r => r.Tags)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query))
             {
-                results = results.Where(r =>
-                    r.Title.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                    r.Description.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                    r.Tags.Any(t => t.Contains(query, StringComparison.OrdinalIgnoreCase)) ||
-                    r.Ingredients.Any(i => i.Name.Contains(query, StringComparison.OrdinalIgnoreCase)));
+                recipes = recipes.Where(r =>
+                    r.Title.Contains(query) ||
+                    r.Description.Contains(query) ||
+                    r.Ingredients.Any(i => i.Name.Contains(query)) ||
+                    r.Tags.Any(t => t.Name.Contains(query)));
             }
 
             if (!string.IsNullOrWhiteSpace(category))
-                results = results.Where(r => r.Category == category);
+            {
+                recipes = recipes.Where(r => r.Category == category);
+            }
 
-            return results.ToList();
+            if (difficulty.HasValue)
+            {
+                recipes = recipes.Where(r => r.Difficulty == difficulty.Value);
+            }
+
+            return await recipes.ToListAsync();
         }
     }
-    }
+}
