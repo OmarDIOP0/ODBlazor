@@ -2,23 +2,65 @@
 
 <PageTitle>RecipeMaster - Gestionnaire de Recettes</PageTitle>
 
-<div class="page">
+<div class="layout-container">
     <div class="sidebar">
         <NavMenu />
     </div>
 
-    <main>
-        <div class="top-row px-4 custom-navbar">
+    <main class="main-content">
+        <div class="top-bar px-4 custom-navbar">
             <div class="container-fluid">
-                <a class="navbar-brand text-white fw-bold" href="">
+                <a class="navbar-brand text-white fw-bold" href="/">
                     <i class="bi bi-egg-fried me-2"></i>RecipeMaster
                 </a>
-                <span class="text-white-50">Votre compagnon culinaire</span>
+                <span class="text-white-50 ms-2">Votre compagnon culinaire</span>
             </div>
         </div>
 
-        <article class="content px-4 py-4">
+        <article class="content-container px-4 py-4">
             @Body
         </article>
     </main>
 </div>
+
+<style>
+    .layout-container {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    .sidebar {
+        width: 250px;
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+    }
+
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .top-bar {
+        background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 1rem 0;
+    }
+
+    .content-container {
+        flex: 1;
+        background-color: #fff;
+    }
+
+    @@media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .layout-container {
+            flex-direction: column;
+        }
+    }
+</style>

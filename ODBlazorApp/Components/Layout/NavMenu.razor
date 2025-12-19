@@ -1,12 +1,12 @@
-﻿<nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+﻿<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
     <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-            <ul class="navbar-nav flex-grow-1">
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                     <a class="nav-link @GetNavLinkClass("/")" href="/">
                         <i class="bi bi-house-door me-1"></i>
@@ -33,31 +33,25 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="/search?difficulty=Facile">
+                            <a class="dropdown-item" href="/?difficulty=Facile">
                                 <i class="bi bi-circle-fill text-success me-2"></i>Facile
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="/search?difficulty=Moyen">
+                            <a class="dropdown-item" href="/?difficulty=Moyen">
                                 <i class="bi bi-circle-fill text-warning me-2"></i>Moyen
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="/search?difficulty=Difficile">
+                            <a class="dropdown-item" href="/?difficulty=Difficile">
                                 <i class="bi bi-circle-fill text-danger me-2"></i>Difficile
                             </a>
                         </li>
                     </ul>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/search?cookTime=15">
-                        <i class="bi bi-lightning-charge me-1"></i>
-                        Rapides (≤ 15min)
-                    </a>
-                </li>
             </ul>
 
-            <form class="d-flex" @onsubmit="HandleSearch" method="get" action="/">
+            <form class="d-flex" @onsubmit="HandleSearch">
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="Rechercher..."
                            @bind="searchTerm" @bind:event="oninput" />
@@ -85,7 +79,8 @@
     {
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            NavigationManager.NavigateTo($"/search?q={Uri.EscapeDataString(searchTerm)}");
+            NavigationManager.NavigateTo($"/?search={Uri.EscapeDataString(searchTerm)}");
+            searchTerm = string.Empty;
         }
     }
 }
